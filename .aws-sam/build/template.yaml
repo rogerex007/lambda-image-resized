@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'lambda-image-resized
+
+  Sample SAM Template for lambda-image-resized
+
+  '
+Parameters:
+  ThumbnailBucketName:
+    Type: String
+    Default: lambda-image-resized-thumbnail-1xhjx72dgplyu
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 128
+    Runtime: nodejs14.x
+    Environment:
+      Variables:
+        UPLOAD_BUCKET_NAME:
+          Ref: ImagesBucket
+        CHUNK_SIZE: 1000
+Resources:
+  ImageResized:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ImageResized
+      Handler: app.lambdaHandler
+      Environment:
+        Variables:
+          THUMBNAIL_BUCKET:
+            Ref: ThumbnailBucketName
+      Policies:
+      - AWSLambdaExecute
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - s3:*
+          Resource: '*'
+      Events:
+        PutImage:
+          Type: Api
+          Properties:
+            Path: /saveImage
+            Method: post
+        GetThumbnailImage:
+          Type: Api
+          Properties:
+            Path: /getThumbnail
+            Method: get
+  ImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      CorsConfiguration:
+        CorsRules:
+        - AllowedHeaders:
+          - '*'
+          AllowedMethods:
+          - GET
+          - PUT
+          - POST
+          - HEAD
+          AllowedOrigins:
+          - '*'
+Outputs:
+  ImageResizedApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/
